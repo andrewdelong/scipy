@@ -695,6 +695,14 @@ def _ip_hsd(A, b, c, c0, alpha0, beta, maxiter, disp, tol, sparse, lstsq,
 
     iteration = 0
 
+    # [4] Table 8.1
+    tol_p = tol
+    tol_d = tol
+    tol_g = tol
+    tol_A = tol*1e-2
+    tol_mu = tol*1e-2
+    tol_I = tol*1e-2
+
     # default initial point
     x, y, z, tau, kappa = _get_blind_start(A.shape)
 
@@ -704,7 +712,8 @@ def _ip_hsd(A, b, c, c0, alpha0, beta, maxiter, disp, tol, sparse, lstsq,
     # [4] 4.5
     rho_p, rho_d, rho_A, rho_g, rho_mu, obj = _indicators(
         A, b, c, c0, x, y, z, tau, kappa)
-    go = rho_p > tol or rho_d > tol or rho_A > tol  # we might get lucky : )
+    
+    go = rho_p > tol_p or rho_d > tol_d or rho_A > tol_A  # we might get lucky : )
 
     if disp:
         _display_iter(rho_p, rho_d, rho_g, "-", rho_mu, obj, header=True)
@@ -785,7 +794,7 @@ def _ip_hsd(A, b, c, c0, alpha0, beta, maxiter, disp, tol, sparse, lstsq,
         # [4] 4.5
         rho_p, rho_d, rho_A, rho_g, rho_mu, obj = _indicators(
             A, b, c, c0, x, y, z, tau, kappa)
-        go = rho_p > tol or rho_d > tol or rho_A > tol
+        go = rho_p > tol_p or rho_d > tol_d or rho_A > tol_A
 
         if disp:
             _display_iter(rho_p, rho_d, rho_g, alpha, rho_mu, obj)
@@ -799,12 +808,12 @@ def _ip_hsd(A, b, c, c0, alpha0, beta, maxiter, disp, tol, sparse, lstsq,
             callback(res)
 
         # [4] 4.5
-        inf1 = (rho_p < tol and rho_d < tol and rho_g < tol and tau < tol *
+        inf1 = (rho_p < tol_p and rho_d < tol_d and rho_g < tol_g and tau < tol_I *
                 max(1, kappa))
-        inf2 = rho_mu < tol and tau < tol * min(1, kappa)
+        inf2 = rho_mu < tol_mu and tau < tol_I * min(1, kappa)
         if inf1 or inf2:
             # [4] Lemma 8.4 / Theorem 8.3
-            if b.transpose().dot(y) > -c.transpose().dot(x):
+            if b.transpose().dot(y) > tol:
                 status = 2
             else:
                 status = 3
